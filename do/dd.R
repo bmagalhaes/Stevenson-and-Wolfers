@@ -7,12 +7,6 @@ library(xtable)
 library(tidytable)
 library(bacondecomp)
 
-# library(plspm)
-# library(multiwayvcov)
-# library(sandwich)
-# library(plm)
-# library(tidyr)
-
 divorce = read_dta("C:/Users/Bernardo/Documents/GitHub/Stevenson-and-Wolfers/data/sw_nofault_divorce.dta")
 
 table_01 = divorce %>%
@@ -31,7 +25,6 @@ table_print = xtable(table_01)
 align(table_print) <- "ll|cccccccccccccc"
 print(table_print, include.rownames = FALSE)
 
-# RUN ONLY WHEN USING LM, NOT NECESSARY WITH FELM
 divorce = divorce %>%
   mutate(year = as_factor(year)) %>%
   mutate(stfips = as_factor(stfips)) %>%
@@ -70,6 +63,29 @@ fe_hoekstra_asmrs = felm(asmrs ~ + X_Texp_1 + X_Texp_2 + X_Texp_3 + X_Texp_4 + X
         + X_Texp_14 + X_Texp_15 + X_Texp_16 + X_Texp_17 + X_Texp_18 + X_Texp_19 + X_Texp_20
         + X_Texp_21 + X_Texp_22 + X_Texp_23 + X_Texp_24 + X_Texp_25 + X_Texp_26
         + X_Texp_27 + X_Texp_28 | year + stfips | 0 | stfips, data=divorce)
+
+f_asmrh = linearHypothesis(fe_hoekstra_asmrh, c("X_Texp_1 = X_Texp_2",
+                                      "X_Texp_2 = X_Texp_3",
+                                      "X_Texp_3 = X_Texp_4",
+                                      "X_Texp_4 = X_Texp_5",
+                                      "X_Texp_5 = X_Texp_6",
+                                      "X_Texp_6 = X_Texp_7",
+                                      "X_Texp_7 = X_Texp_8",
+                                      "X_Texp_8 = X_Texp_9",
+                                      "X_Texp_9 = 0"))
+
+f_asmrs = linearHypothesis(fe_hoekstra_asmrs, c("X_Texp_1 = X_Texp_2",
+                                             "X_Texp_2 = X_Texp_3",
+                                             "X_Texp_3 = X_Texp_4",
+                                             "X_Texp_4 = X_Texp_5",
+                                             "X_Texp_5 = X_Texp_6",
+                                             "X_Texp_6 = X_Texp_7",
+                                             "X_Texp_7 = X_Texp_8",
+                                             "X_Texp_8 = X_Texp_9",
+                                             "X_Texp_9 = 0"))
+stargazer(f_asmrh)
+stargazer(f_asmrs)
+stargazer(f_asmrh, f_asmrs, flip = TRUE)
 
 plot_order <- c("X_Texp_1", "X_Texp_2", "X_Texp_3", "X_Texp_4", "X_Texp_5", "X_Texp_6", "X_Texp_7",
                 "X_Texp_8", "X_Texp_9", "X_Texp_11", "X_Texp_12", "X_Texp_13", "X_Texp_14", 
@@ -110,7 +126,7 @@ leadslags_asmrh %>%
   scale_x_continuous(breaks= c(-9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18)) +
   theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank())
 
-leadslags_asmrh %>%
+plot_1=leadslags_asmrh %>%
   ggplot(aes(x = label, y = mean, ymin = mean-1.96*sd, ymax = mean+1.96*sd)) +
   geom_point(color = "dark blue") +
   geom_line(aes(y = mean+1.96*sd, x=label), colour = 'dark blue', linetype = "dashed") +
@@ -118,7 +134,7 @@ leadslags_asmrh %>%
   geom_line(color = "dark blue") +
   geom_ribbon(alpha = 0.4, fill = "light blue") +
   theme_bw() +
-  xlab("Years before and after Unilateral Divorce Law") +
+  xlab("Years Relative to Divorce Reform") +
   ylab("Homicide Mortality") +
   geom_hline(yintercept = 0, color = "dark grey", size = 0.8) +
   geom_vline(xintercept = 0, color = "dark grey", size = 0.8) +
@@ -141,7 +157,7 @@ leadslags_asmrs %>%
   scale_x_continuous(breaks= c(-9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18)) +
   theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank())
 
-a = leadslags_asmrs %>%
+plot_2 = leadslags_asmrs %>%
   ggplot(aes(x = label, y = mean, ymin = mean-1.96*sd, ymax = mean+1.96*sd)) +
   geom_point(color = "dark blue") +
   geom_line(aes(y = mean+1.96*sd, x=label), colour = 'dark blue', linetype = "dashed") +
@@ -149,7 +165,7 @@ a = leadslags_asmrs %>%
   geom_line(color = "dark blue") +
   geom_ribbon(alpha = 0.4, fill = "light blue") +
   theme_bw() +
-  xlab("Years before and after Unilateral Divorce Law") +
+  xlab("Years Relative to Divorce Reform") +
   ylab("Suicide Mortality") +
   geom_hline(yintercept = 0, color = "dark grey", size = 0.8) +
   geom_vline(xintercept = 0, color = "dark grey", size = 0.8) +
@@ -159,7 +175,8 @@ a = leadslags_asmrs %>%
   annotation_custom(grid.text(text_asmrs, x=0.52,  y=0.11,
                               gp=gpar(col="black", fontsize=8, fontface="bold")))
 
-ggsave(a, filename = "abab.png")
+ggsave(plot_1, dpi = 1200,filename = "asmrh.png")
+ggsave(plot_2, dpi = 1200,filename = "asmrs.png")
 
 df_bacon_asmrh <- bacon(formula = asmrh ~ post,
                   data = divorce, id_var = "stfips",
@@ -189,26 +206,29 @@ table_print = xtable(bacon_asmrs)
 align(table_print) <- "llccc"
 print(table_print, include.rownames = FALSE)
 
-df_bacon_asmrh %>%
+plot_3 = df_bacon_asmrh %>%
   ggplot(aes(x = weight, y = estimate, group = type)) +
   geom_point(aes(shape = type, color = type)) +
   geom_hline(yintercept = 0, color = "dark grey") +
   geom_hline(yintercept = fe_simple_asmrh[["coefficients"]], color = "red", size = 0.8) +
   xlab("Weight") +
-  ylab("DD Estimate")+
+  ylab("2x2 DD Estimate (Homicide)")+
   guides(shape = guide_legend(""), color = guide_legend("")) +
   theme_bw()+
   theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),
         legend.position="bottom")
 
-df_bacon_asmrs %>%
+plot_4 = df_bacon_asmrs %>%
   ggplot(aes(x = weight, y = estimate, group = type)) +
   geom_point(aes(shape = type, color = type)) +
   geom_hline(yintercept = 0, color = "dark grey") +
   geom_hline(yintercept = fe_simple_asmrs[["coefficients"]], color = "red", size = 0.8) +
   xlab("Weight") +
-  ylab("DD Estimate") +
+  ylab("2x2 DD Estimate (Suicide)") +
   guides(shape = guide_legend(""), color = guide_legend("")) +
   theme_bw()+
   theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),
         legend.position="bottom")
+
+ggsave(plot_3, dpi = 1200,filename = "2x2_asmrh.png")
+ggsave(plot_4, dpi = 1200,filename = "2x2_asmrs.png")
